@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thyroid Disease Prediction</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* --- VARIABLES --- */
+    :root {
+        --primary: #6366f1;
+        --primary-glow: rgba(99, 102, 241, 0.4);
+        --secondary: #a855f7;
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        --backdrop: blur(30px) saturate(160%);
+        --input-bg: rgba(255, 255, 255, 0.5);
+        --text-main: #1e293b;
+        --text-muted: #475569;
+    }
+
+    body {
+        margin: 0; font-family: 'Outfit', sans-serif;
+        background: #f0f2f5; color: var(--text-main);
+        min-height: 100vh; overflow-x: hidden;
+        cursor: default; /* Default cursor + Aura */
+    }
+
+    /* --- FLUID AURA --- */
+    #mouse-aura {
+        position: fixed; top: 0; left: 0;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%);
+        border-radius: 50%;
+        pointer-events: none; z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s ease, height 0.3s ease, background 0.3s ease;
+        mix-blend-mode: plus-lighter;
+    }
+    body.hover-active #mouse-aura {
+        width: 120px; height: 120px;
+        background: radial-gradient(circle, rgba(236, 72, 153, 0.4), transparent 70%);
+    }
+
+    /* --- BACKGROUND --- */
+    .bg-gradient {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+        background: linear-gradient(120deg, #e0e7ff, #f3e8ff, #fce7f3, #e0e7ff);
+        background-size: 400% 400%; animation: gradientShift 15s ease infinite;
+    }
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    .blob-cont { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: -1; overflow: hidden; pointer-events: none; }
+    .blob {
+        position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.8;
+        transition: transform 0.1s linear; 
+    }
+    .blob-1 { top: -10%; left: -10%; width: 50vh; height: 50vh; background: #818cf8; animation: pulseBlob 10s infinite alternate; }
+    .blob-2 { bottom: -10%; right: -10%; width: 60vh; height: 60vh; background: #c084fc; animation: pulseBlob 14s infinite alternate-reverse; }
+    .blob-3 { top: 40%; left: 30%; width: 40vh; height: 40vh; background: #f472b6; animation: pulseBlob 12s infinite alternate; }
+    @keyframes pulseBlob { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+    /* --- ANIMATIONS --- */
+    .reveal {
+        opacity: 0; transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); filter: blur(5px);
+    }
+    .reveal.active { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+    /* --- NAV --- */
+    .glass-nav{
+        display:flex;justify-content:space-between;align-items:center;
+        padding:15px 30px;margin:20px auto;width:90%;max-width:1000px;
+        background:rgba(255,255,255,0.6);
+        backdrop-filter:blur(20px);
+        border-radius:50px;border:1px solid rgba(255,255,255,0.7);
+        box-shadow:0 10px 30px rgba(0,0,0,0.05);
+        position:sticky;top:20px;z-index:1000;transition:.3s;}
+    .nav-logo{font-weight:700;font-size:22px;color:var(--primary);display:flex;gap:10px;align-items:center;}
+    .nav-links a{text-decoration:none;color:var(--text-muted);font-weight:600;padding:10px 25px;border-radius:30px;transition:all .3s;}
+    .nav-links a:hover{background:rgba(255,255,255,0.8);color:var(--primary);transform:translateY(-2px);}
+    .nav-links a.active{background:white;color:var(--primary);box-shadow:0 4px 15px rgba(0,0,0,0.05);}
+
+    /* --- LAYOUT --- */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px 100px; }
+    .hero { text-align: center; padding: 20px 0 40px; }
+    .hero h1 {
+        font-size: 48px; font-weight: 800; margin: 0; letter-spacing: -1px;
+        background: linear-gradient(110deg, #1e293b 30%, #6366f1 50%, #1e293b 70%);
+        background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: shimmer 5s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% center; } }
+    .hero p { font-size: 18px; color: var(--text-muted); margin-top: 10px; font-weight: 300; }
+
+    /* --- GLASS CARDS --- */
+    .glass-panel {
+        position: relative; overflow: hidden;
+        background: var(--glass-bg);
+        backdrop-filter: var(--backdrop); -webkit-backdrop-filter: var(--backdrop);
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        border-radius: 24px; padding: 35px; margin-bottom: 25px;
+        transition: transform 0.3s ease;
+    }
+    .glass-panel::after {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.4), transparent 40%);
+        opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 1;
+    }
+    .glass-panel:hover::after { opacity: 1; }
+    .glass-panel > * { position: relative; z-index: 2; }
+    .glass-panel:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.35); }
+
+    .section-tag {
+        font-size: 12px; font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;
+        display: block; opacity: 0.8;
+    }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+    .input-wrapper { position: relative; margin-top: 10px; }
+    .glass-input {
+        width: 100%; padding: 16px; background: var(--input-bg);
+        border: 1px solid white; border-radius: 16px;
+        font-size: 16px; color: var(--text-main); font-weight: 500;
+        box-sizing: border-box; transition: all 0.3s ease;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .glass-input:focus { outline: none; background: white; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .input-label { position: absolute; top: -22px; left: 5px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .unit { position: absolute; right: 15px; top: 18px; font-size: 12px; color: #94a3b8; font-weight: 600; }
+
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip-check { position: absolute; opacity: 0; }
+    .glass-chip {
+        padding: 8px 16px; background: var(--input-bg); border: 1px solid white;
+        border-radius: 50px; font-size: 13px; font-weight: 500; color: var(--text-muted);
+        cursor: pointer; transition: 0.3s ease; user-select: none; display: flex; align-items: center; gap: 6px;
+    }
+    .glass-chip:hover { background: white; transform: translateY(-2px); }
+    .chip-check:checked + .glass-chip {
+        background: var(--primary); color: white; border-color: var(--primary);
+        box-shadow: 0 5px 15px var(--primary-glow);
+    }
+    .chip-check:checked + .glass-chip::before { content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+    .action-btn {
+        position: relative; overflow: hidden;
+        width: 100%; padding: 20px; margin-top: 20px;
+        background: rgba(255,255,255,0.4); border: 1px solid white;
+        color: var(--primary); font-size: 18px; font-weight: 700;
+        border-radius: 16px; cursor: pointer; backdrop-filter: blur(5px);
+        transition: 0.4s ease; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    .action-btn:hover { background: var(--primary); color: white; transform: translateY(-3px); box-shadow: 0 15px 30px var(--primary-glow); }
+    .ripple {
+        position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.4);
+        transform: scale(0); animation: ripple-anim 0.6s linear; pointer-events: none;
+    }
+    @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+    /* Result */
+    .result-glass {
+        display: none; margin-top: 30px;
+        background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(40px);
+        border-radius: 24px; padding: 0; overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+        animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        border: 1px solid white;
+    }
+    .res-header { padding: 40px 30px; text-align: center; color: white; position: relative; }
+    .res-safe { background: linear-gradient(135deg, #10b981, #059669); }
+    .res-warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .res-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+    
+    .res-body { padding: 30px; }
+    .biomarker-row { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .biomarker-row:last-child { border-bottom: none; margin-bottom: 0; }
+    .row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .bar-label { font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+    .badge-norm { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-high { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-low { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+    
+    .track { height: 10px; background: #f1f5f9; border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+    .fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 10px; }
+    .fill-norm { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .fill-high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .fill-low { background: linear-gradient(90deg, #eab308, #ca8a04); }
+    
+    .ref-text { font-size: 11px; color: #94a3b8; font-weight: 600; text-align: right; margin-top: 6px; }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+    <div id="mouse-aura"></div>
+
+    <div class="bg-gradient"></div>
+    <div class="blob-cont">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav class="glass-nav">
+        <div class="nav-logo"><i class="fas fa-dna"></i> ThyroAI</div>
+        <div class="nav-links">
+            <a href="home.html">Info Center</a>
+            <a href="index.html" class="active">Predictor Tool</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1 class="reveal">Clinical Predictor</h1>
+            <p class="reveal">AI Analysis powered by Random Forest Classification</p>
+        </div>
+
+        <span class="section-tag reveal">01. Demographics</span>
+        <div class="glass-panel reveal">
+            <div class="input-grid">
+                <div class="input-wrapper">
+                    <label class="input-label">Age (0-1 Normalized)</label>
+                    <input type="number" id="age" class="glass-input" step="0.01" min="0" max="1" placeholder="0.5">
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label">Biological Sex</label>
+                    <select id="sex" class="glass-input">
+                        <option value="">Select...</option>
+                        <option value="0">Female</option>
+                        <option value="1">Male</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <span class="section-tag reveal">02. Medical History</span>
+        <div class="glass-panel reveal">
+            <div class="chip-grid">
+                <label><input type="checkbox" id="on_thyroxine" class="chip-check"><span class="glass-chip">On Thyroxine</span></label>
+                <label><input type="checkbox" id="query_on_thyroxine" class="chip-check"><span class="glass-chip">Query Thyroxine</span></label>
+                <label><input type="checkbox" id="on_antithyroid_medication" class="chip-check"><span class="glass-chip">Antithyroid Meds</span></label>
+                <label><input type="checkbox" id="sick" class="chip-check"><span class="glass-chip">Sick</span></label>
+                <label><input type="checkbox" id="pregnant" class="chip-check"><span class="glass-chip">Pregnant</span></label>
+                <label><input type="checkbox" id="thyroid_surgery" class="chip-check"><span class="glass-chip">Surgery</span></label>
+                <label><input type="checkbox" id="I131_treatment" class="chip-check"><span class="glass-chip">I131 Tx</span></label>
+                <label><input type="checkbox" id="query_hypothyroid" class="chip-check"><span class="glass-chip">Query Hypo</span></label>
+                <label><input type="checkbox" id="query_hyperthyroid" class="chip-check"><span class="glass-chip">Query Hyper</span></label>
+                <label><input type="checkbox" id="lithium" class="chip-check"><span class="glass-chip">Lithium</span></label>
+                <label><input type="checkbox" id="goitre" class="chip-check"><span class="glass-chip">Goitre</span></label>
+                <label><input type="checkbox" id="tumor" class="chip-check"><span class="glass-chip">Tumor</span></label>
+                <label><input type="checkbox" id="hypopituitary" class="chip-check"><span class="glass-chip">Hypopituitary</span></label>
+                <label><input type="checkbox" id="psych" class="chip-check"><span class="glass-chip">Psych History</span></label>
+            </div>
+        </div>
+
+        <span class="section-tag reveal">03. Blood Work</span>
+        <div class="glass-panel reveal">
+            <div class="input-grid">
+                <div class="input-wrapper">
+                    <label class="input-label">TSH Level</label>
+                    <input type="number" id="TSH" class="glass-input" step="0.0001">
+                    <span class="unit">mIU/L</span>
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label">T3 Level</label>
+                    <input type="number" id="T3" class="glass-input" step="0.001">
+                    <span class="unit">ng/dL</span>
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label">TT4 Level</label>
+                    <input type="number" id="TT4" class="glass-input" step="0.001">
+                    <span class="unit">mcg/dL</span>
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label">T4U Index</label>
+                    <input type="number" id="T4U" class="glass-input" step="0.001">
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label">FTI Index</label>
+                    <input type="number" id="FTI" class="glass-input" step="0.001">
+                    <span class="unit">mcg/dL</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMsg" style="color:#ef4444; text-align:center; font-weight:600; display:none; margin-bottom:15px;" class="reveal">
+            <i class="fas fa-exclamation-circle"></i> Please check all fields.
+        </div>
+
+        <button class="action-btn reveal" onclick="predict()" id="btnPredict">
+            Analyze Data <i class="fas fa-microchip" style="margin-left: 8px;"></i>
+        </button>
+
+        <div id="resultContainer" class="result-glass">
+            <div id="resultHeader" class="res-header">
+                <i id="resultIcon" class="fas" style="font-size: 50px; margin-bottom: 10px;"></i>
+                <h2 id="diagnosisTitle" style="color: white; margin: 0; font-size: 32px; letter-spacing: -1px;"></h2>
+                <p id="diagnosisSub" style="color: rgba(255,255,255,0.9); margin: 5px 0 0; font-size: 16px;"></p>
+            </div>
+            
+            <div class="res-body">
+                <h4 style="margin: 0 0 25px; color: var(--text-main); font-size: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                    <i class="fas fa-chart-bar" style="color: var(--primary); margin-right: 8px;"></i>Biomarker Analysis
+                </h4>
+                
+                <div class="biomarker-row">
+                    <div class="row-header">
+                        <span class="bar-label">TSH <span id="badgeTSH" class="status-badge"></span></span>
+                        <span class="val-display" id="valTSH">--</span>
+                    </div>
+                    <div class="track"><div id="barTSH" class="fill"></div></div>
+                    <div class="ref-text">Normal Range: 0.4 – 4.0 mIU/L</div>
+                </div>
+
+                <div class="biomarker-row">
+                    <div class="row-header">
+                        <span class="bar-label">T3 <span id="badgeT3" class="status-badge"></span></span>
+                        <span class="val-display" id="valT3">--</span>
+                    </div>
+                    <div class="track"><div id="barT3" class="fill"></div></div>
+                    <div class="ref-text">Normal Range: 80 – 200 ng/dL</div>
+                </div>
+
+                <div class="biomarker-row">
+                    <div class="row-header">
+                        <span class="bar-label">TT4 <span id="badgeTT4" class="status-badge"></span></span>
+                        <span class="val-display" id="valTT4">--</span>
+                    </div>
+                    <div class="track"><div id="barTT4" class="fill"></div></div>
+                    <div class="ref-text">Normal Range: 5 – 12 mcg/dL</div>
+                </div>
+
+                <div class="biomarker-row">
+                    <div class="row-header">
+                        <span class="bar-label">T4U <span id="badgeT4U" class="status-badge"></span></span>
+                        <span class="val-display" id="valT4U">--</span>
+                    </div>
+                    <div class="track"><div id="barT4U" class="fill"></div></div>
+                    <div class="ref-text">Normal Range: 0.8 – 1.2</div>
+                </div>
+
+                <div class="biomarker-row">
+                    <div class="row-header">
+                        <span class="bar-label">FTI <span id="badgeFTI" class="status-badge"></span></span>
+                        <span class="val-display" id="valFTI">--</span>
+                    </div>
+                    <div class="track"><div id="barFTI" class="fill"></div></div>
+                    <div class="ref-text">Normal Range: 70 – 150 mcg/dL</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">© 2026 ThyroAI • Clinical Predictor</footer>
+
+<script>
+    // --- FLUID AURA LOGIC ---
+    const aura = document.getElementById('mouse-aura');
+    let mouseX = 0, mouseY = 0, auraX = 0, auraY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+    });
+
+    function animateAura() {
+        auraX += (mouseX - auraX) * 0.15;
+        auraY += (mouseY - auraY) * 0.15;
+        aura.style.left = auraX + 'px';
+        aura.style.top = auraY + 'px';
+        requestAnimationFrame(animateAura);
+    }
+    animateAura();
+
+    // Hover State
+    document.querySelectorAll('a, button, input, select, label, .glass-btn, .glass-chip').forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('hover-active'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('hover-active'));
+    });
+
+    // --- EFFECTS ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target); 
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    document.querySelectorAll('.glass-panel').forEach(card => {
+        card.onmousemove = e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+        };
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        const x = (window.innerWidth - e.pageX * 2) / 90;
+        const y = (window.innerHeight - e.pageY * 2) / 90;
+        document.querySelectorAll('.blob').forEach(blob => {
+            blob.style.transform = `translate(${x}px, ${y}px)`;
+        });
+    });
+
+    document.getElementById('btnPredict').addEventListener('click', function(e) {
+        let x = e.clientX - e.target.getBoundingClientRect().left;
+        let y = e.clientY - e.target.getBoundingClientRect().top;
+        let ripples = document.createElement('span');
+        ripples.style.left = x + 'px';
+        ripples.style.top = y + 'px';
+        ripples.classList.add('ripple');
+        this.appendChild(ripples);
+        setTimeout(() => { ripples.remove() }, 600);
+    });
+
+    function validateInputs() {
+        let valid = true;
+        document.querySelectorAll('input[type="number"], select').forEach(input => {
+            if (!input.value && input.value !== 0) {
+                input.style.borderColor = '#ef4444';
+                valid = false;
+            } else {
+                input.style.borderColor = 'white';
+            }
+        });
+        return valid;
+    }
+
+    function predict() {
+        const error = document.getElementById('errorMsg');
+        const btn = document.getElementById('btnPredict');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        error.style.display = 'none';
+        resultContainer.style.display = 'none';
+
+        if (!validateInputs()) {
+            error.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+
+        const payload = {
+            age: parseFloat(document.getElementById('age').value),
+            sex: parseInt(document.getElementById('sex').value),
+            on_thyroxine: document.getElementById('on_thyroxine').checked ? 1 : 0,
+            query_on_thyroxine: document.getElementById('query_on_thyroxine').checked ? 1 : 0,
+            on_antithyroid_medication: document.getElementById('on_antithyroid_medication').checked ? 1 : 0,
+            sick: document.getElementById('sick').checked ? 1 : 0,
+            pregnant: document.getElementById('pregnant').checked ? 1 : 0,
+            thyroid_surgery: document.getElementById('thyroid_surgery').checked ? 1 : 0,
+            I131_treatment: document.getElementById('I131_treatment').checked ? 1 : 0,
+            query_hypothyroid: document.getElementById('query_hypothyroid').checked ? 1 : 0,
+            query_hyperthyroid: document.getElementById('query_hyperthyroid').checked ? 1 : 0,
+            lithium: document.getElementById('lithium').checked ? 1 : 0,
+            goitre: document.getElementById('goitre').checked ? 1 : 0,
+            tumor: document.getElementById('tumor').checked ? 1 : 0,
+            hypopituitary: document.getElementById('hypopituitary').checked ? 1 : 0,
+            psych: document.getElementById('psych').checked ? 1 : 0,
+            TSH: parseFloat(document.getElementById('TSH').value),
+            T3: parseFloat(document.getElementById('T3').value),
+            TT4: parseFloat(document.getElementById('TT4').value),
+            T4U: parseFloat(document.getElementById('T4U').value),
+            FTI: parseFloat(document.getElementById('FTI').value)
+        };
+
+        fetch("http://127.0.0.1:8000/predict", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Prediction failed");
+            return data;
+        })
+        .then(res => {
+            renderResult(res.diagnosis, payload);
+        })
+        .catch(err => {
+            error.innerHTML = "<i class='fas fa-exclamation-triangle'></i> " + err.message;
+            error.style.display = 'block';
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = 'Analyze Data <i class="fas fa-microchip" style="margin-left: 8px;"></i>';
+        });
+    }
+
+    function renderResult(diagnosis, data) {
+        const container = document.getElementById('resultContainer');
+        const header = document.getElementById('resultHeader');
+        const icon = document.getElementById('resultIcon');
+        const title = document.getElementById('diagnosisTitle');
+        const sub = document.getElementById('diagnosisSub');
+
+        container.style.display = 'block';
+        header.className = 'res-header'; 
+
+        if (diagnosis === "Hyperthyroidism") {
+            header.classList.add('res-danger');
+            icon.className = "fas fa-bolt";
+            title.innerText = "Hyperthyroidism Detected";
+            sub.innerText = "Biomarkers suggest overactive thyroid function.";
+        } else if (diagnosis === "Hypothyroidism") {
+            header.classList.add('res-warn');
+            icon.className = "fas fa-snowflake";
+            title.innerText = "Hypothyroidism Detected";
+            sub.innerText = "Biomarkers suggest underactive thyroid function.";
+        } else {
+            header.classList.add('res-safe');
+            icon.className = "fas fa-check-circle";
+            title.innerText = "Normal Thyroid Function";
+            sub.innerText = "No significant clinical abnormalities found.";
+        }
+
+        // Render Bars & Badges
+        updateBar('TSH', data.TSH, 4.0, 0.4);
+        updateBar('T3', data.T3, 200, 80);
+        updateBar('TT4', data.TT4, 12, 5);
+        updateBar('T4U', data.T4U, 1.2, 0.8);
+        updateBar('FTI', data.FTI, 150, 70);
+
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function updateBar(id, value, highRef, lowRef) {
+        const bar = document.getElementById('bar' + id);
+        const valText = document.getElementById('val' + id);
+        const badge = document.getElementById('badge' + id);
+        
+        valText.innerText = value;
+        bar.style.width = '0%';
+        bar.className = 'fill'; 
+
+        setTimeout(() => {
+            if (value > highRef) {
+                bar.style.width = "100%";
+                bar.className = 'fill fill-high';
+                badge.innerText = "HIGH";
+                badge.className = "status-badge badge-high";
+            } else if (value < lowRef) {
+                bar.style.width = "20%";
+                bar.className = 'fill fill-low';
+                badge.innerText = "LOW";
+                badge.className = "status-badge badge-low";
+            } else {
+                bar.style.width = "60%";
+                bar.className = 'fill fill-norm';
+                badge.innerText = "NORMAL";
+                badge.className = "status-badge badge-norm";
+            }
+        }, 100);
+    }
+</script>
+</body>
+</html>

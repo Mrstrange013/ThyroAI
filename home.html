@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThyroAI | Thyroid Awareness & Clinical Information</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-glow: rgba(99, 102, 241, 0.4);
+        --secondary: #a855f7;
+        --accent: #ec4899;
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        --backdrop: blur(30px) saturate(160%);
+        --text-main: #1e293b;
+        --text-muted: #475569;
+    }
+
+    body {margin:0;font-family:'Outfit',sans-serif;background:#f0f2f5;color:var(--text-main);min-height:100vh;overflow-x:hidden;cursor:default;}
+    #mouse-aura {position:fixed;top:0;left:0;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,0.15),transparent 70%);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s,background .3s;mix-blend-mode:plus-lighter;}
+    body.hover-active #mouse-aura {width:120px;height:120px;background:radial-gradient(circle,rgba(236,72,153,0.4),transparent 70%);}
+
+    .bg-gradient {position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background:linear-gradient(120deg,#e0e7ff,#f3e8ff,#fce7f3,#e0e7ff);background-size:400% 400%;animation:gradientShift 15s ease infinite;}
+    @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+    .blob-cont{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+    .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.8;transition:transform .1s linear;}
+    .blob-1{top:-10%;left:-10%;width:50vh;height:50vh;background:#818cf8;animation:pulseBlob 8s infinite alternate;}
+    .blob-2{bottom:-10%;right:-10%;width:60vh;height:60vh;background:#c084fc;animation:pulseBlob 12s infinite alternate-reverse;}
+    .blob-3{top:40%;left:30%;width:40vh;height:40vh;background:#f472b6;animation:pulseBlob 10s infinite alternate;}
+    @keyframes pulseBlob{0%{transform:scale(1)}100%{transform:scale(1.1)}}
+
+    .reveal{opacity:0;transform:translateY(30px) scale(0.95);transition:all .8s cubic-bezier(.2,.8,.2,1);filter:blur(5px);}
+    .reveal.active{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+
+    .glass-nav{
+        display:flex;justify-content:space-between;align-items:center;
+        padding:15px 30px;margin:20px auto;width:90%;max-width:1000px;
+        background:rgba(255,255,255,0.6);
+        backdrop-filter:blur(20px);
+        border-radius:50px;border:1px solid rgba(255,255,255,0.7);
+        box-shadow:0 10px 30px rgba(0,0,0,0.05);
+        position:sticky;top:20px;z-index:1000;transition:.3s;}
+    .nav-logo{font-weight:700;font-size:22px;color:var(--primary);display:flex;gap:10px;align-items:center;}
+    .nav-links a{text-decoration:none;color:var(--text-muted);font-weight:600;padding:10px 25px;border-radius:30px;transition:all .3s;}
+    .nav-links a:hover{background:rgba(255,255,255,0.8);color:var(--primary);transform:translateY(-2px);}
+    .nav-links a.active{background:white;color:var(--primary);box-shadow:0 4px 15px rgba(0,0,0,0.05);}
+
+    .glass-panel{position:relative;overflow:hidden;background:var(--glass-bg);backdrop-filter:var(--backdrop);border:var(--glass-border);box-shadow:var(--glass-shadow);border-radius:24px;padding:40px;margin-bottom:30px;transition:transform .2s,box-shadow .2s;}
+    .glass-panel::after{content:"";position:absolute;inset:0;background:radial-gradient(800px circle at var(--mouse-x) var(--mouse-y),rgba(255,255,255,0.4),transparent 40%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:1;}
+    .glass-panel:hover::after{opacity:1;}
+    .glass-panel:hover{transform:translateY(-5px);background:rgba(255,255,255,0.35);}
+    .glass-panel > *{position:relative;z-index:2;}
+
+    .container{max-width:900px;margin:0 auto;padding:40px 20px 100px;}
+    .hero{text-align:center;padding:40px 0 60px;}
+    .hero h1{font-size:56px;font-weight:800;margin:0;letter-spacing:-1px;background:linear-gradient(110deg,#1e293b 30%,#6366f1 50%,#1e293b 70%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 5s linear infinite;}
+    @keyframes shimmer{to{background-position:200% center}}
+
+    h2{font-size:26px;color:#1e1b4b;margin-top:0;display:flex;align-items:center;gap:15px;}
+    h2 i{background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;filter:drop-shadow(0 4px 10px var(--primary-glow));}
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+
+    .stat-card {
+
+        background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6);
+
+        padding: 20px; border-radius: 20px; text-align: center; backdrop-filter: blur(10px); transition: 0.4s ease;
+
+    }
+
+    .stat-card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.8); box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2); }
+
+    .stat-num { font-size: 42px; font-weight: 800; color: var(--primary); display: block; line-height: 1; }
+
+    .stat-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+
+    .symptom-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:15px;margin-top:25px;}
+    .symptom-label{cursor:pointer;position:relative;}
+    .symptom-checkbox{position:absolute;opacity:0;}
+    .symptom-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 10px;height:100px;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.6);border-radius:16px;transition:all .3s cubic-bezier(.25,.8,.25,1);}
+    .symptom-label:hover .symptom-tile{background:white;transform:translateY(-5px);box-shadow:0 5px 15px rgba(0,0,0,0.05);}
+    .symptom-checkbox:checked + .symptom-tile{background:rgba(255,255,255,0.9);border-color:var(--primary);transform:translateY(-5px);box-shadow:0 10px 25px var(--primary-glow);}
+    .symptom-checkbox:checked + .symptom-tile i{color:var(--primary);transform:scale(1.2);}
+
+    .glass-btn{position:relative;overflow:hidden;background:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.6);color:var(--primary);font-weight:700;padding:16px 30px;border-radius:50px;cursor:pointer;backdrop-filter:blur(5px);transition:.4s;display:inline-block;text-decoration:none;}
+    .glass-btn:hover{background:var(--primary);color:white;border-color:var(--primary);box-shadow:0 10px 30px var(--primary-glow);transform:translateY(-3px) scale(1.02);}
+    .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.4);transform:scale(0);animation:ripple-anim .6s linear;pointer-events:none;}
+    @keyframes ripple-anim{to{transform:scale(4);opacity:0;}}
+
+    .pill-container{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+    .risk-pill{padding:8px 16px;background:rgba(255,255,255,0.5);border:1px solid white;border-radius:20px;font-size:14px;color:var(--text-muted);font-weight:500;display:flex;align-items:center;gap:8px;transition:.3s;}
+    .risk-pill:hover{background:white;transform:scale(1.05) rotate(2deg);}
+
+    .myth-fact{display:flex;gap:15px;margin-bottom:15px;align-items:flex-start;}
+    .icon-box{min-width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;}
+    .myth .icon-box{background:#ef4444;}
+    .fact .icon-box{background:#10b981;}
+
+    .accordion-btn{width:100%;text-align:left;padding:18px;background:rgba(255,255,255,0.3);border:none;border-radius:16px;margin-bottom:8px;cursor:pointer;font-weight:600;transition:.3s;display:flex;justify-content:space-between;align-items:center;}
+    .accordion-btn:hover{background:rgba(255,255,255,0.6);}
+    .panel{max-height:0;overflow:hidden;transition:max-height .4s ease;background:rgba(255,255,255,0.2);padding:0 18px;border-radius:16px;}
+    .panel.show{max-height:200px;padding:18px;}
+
+    .nutri-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-top:20px;}
+    .nutri-card{text-align:center;padding:20px;background:rgba(255,255,255,0.4);border-radius:16px;transition:.3s;}
+    .nutri-card:hover{transform:translateY(-8px);background:rgba(255,255,255,0.7);}
+    .nutri-icon{font-size:36px;margin-bottom:10px;}
+
+    @media(max-width:768px){
+        .hero h1{font-size:40px;}
+        .stats-grid,.info-grid{grid-template-columns:1fr;}
+        .symptom-grid{grid-template-columns:repeat(2,1fr);}
+    }
+</style>
+</head>
+<body>
+<div id="mouse-aura"></div>
+<div class="bg-gradient"></div>
+<div class="blob-cont">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<nav class="glass-nav">
+    <div class="nav-logo"><i class="fas fa-dna"></i> ThyroAI</div>
+    <div class="nav-links">
+        <a href="home.html" class="active">Info Center</a>
+        <a href="index.html">Predictor Tool</a>
+    </div>
+</nav>
+
+<div class="hero">
+    <h1 class="reveal">Thyroid Knowledge</h1>
+    <p class="reveal">Understanding Causes, Symptoms & Prevention</p>
+</div>
+
+<div class="container">
+
+    <div class="stats-grid">
+        <div class="stat-card reveal">
+            <span class="stat-num">~200M</span>
+            <span class="stat-label">Global Cases</span>
+        </div>
+        <div class="stat-card reveal">
+            <span class="stat-num">1:8</span>
+            <span class="stat-label">Women's Risk</span>
+        </div>
+        <div class="stat-card reveal">
+            <span class="stat-num">60%</span>
+            <span class="stat-label">Undiagnosed</span>
+        </div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-cogs"></i> How It Works</h2>
+        <div style="display:flex;justify-content:space-around;flex-wrap:wrap;gap:20px;text-align:center;">
+            <div style="flex:1;min-width:200px;"><div style="font-size:50px;color:var(--primary);"><i class="fas fa-file-medical-alt"></i></div><strong>1. Enter Data</strong><p>Input clinical blood values</p></div>
+            <div style="flex:1;min-width:200px;"><div style="font-size:50px;color:var(--secondary);"><i class="fas fa-microchip"></i></div><strong>2. AI Analysis</strong><p>Model processes parameters</p></div>
+            <div style="flex:1;min-width:200px;"><div style="font-size:50px;color:var(--accent);"><i class="fas fa-file-invoice"></i></div><strong>3. Get Result</strong><p>Instant diagnosis report</p></div>
+        </div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-clipboard-check"></i> Interactive Symptom Checker</h2>
+        <p>Select any symptoms you're experiencing (this is not a medical diagnosis):</p>
+        <div class="symptom-grid">
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-bed"></i><span>Extreme Fatigue</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-weight"></i><span>Weight Gain</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-snowflake"></i><span>Cold Sensitivity</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-tint-slash"></i><span>Dry Skin / Hair Loss</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-frown"></i><span>Constipation</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hypo"><div class="symptom-tile"><i class="fas fa-sad-tear"></i><span>Depression</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-arrow-down"></i><span>Weight Loss</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-bolt"></i><span>Anxiety</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-fire"></i><span>Heat Intolerance</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-hand-paper"></i><span>Tremors</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-heartbeat"></i><span>Rapid Heartbeat</span></div></label>
+            <label class="symptom-label"><input type="checkbox" class="symptom-checkbox" value="hyper"><div class="symptom-tile"><i class="fas fa-tshirt"></i><span>Excessive Sweating</span></div></label>
+        </div>
+        <div style="text-align:center;margin-top:25px;">
+            <button class="glass-btn" onclick="checkSymptoms(event)">Check My Symptoms</button>
+        </div>
+        <div id="symptomResult" style="margin-top:25px;padding:20px;border-radius:16px;text-align:center;display:none;background:rgba(255,255,255,0.6);border:1px solid white;font-weight:600;"></div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-balance-scale"></i> Common Myths vs Facts</h2>
+        <div class="info-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+            <div style="background:rgba(255,255,255,0.4);padding:20px;border-radius:16px;">
+                <div class="myth-fact myth"><div class="icon-box"><i class="fas fa-times"></i></div><div><strong>Myth:</strong> Thyroid problems only affect older women.</div></div>
+                <div class="myth-fact fact"><div class="icon-box"><i class="fas fa-check"></i></div><div><strong>Fact:</strong> Can affect men, infants, teens, and all ages.</div></div>
+            </div>
+            <div style="background:rgba(255,255,255,0.4);padding:20px;border-radius:16px;">
+                <div class="myth-fact myth"><div class="icon-box"><i class="fas fa-times"></i></div><div><strong>Myth:</strong> A lump always means cancer.</div></div>
+                <div class="myth-fact fact"><div class="icon-box"><i class="fas fa-check"></i></div><div><strong>Fact:</strong> 95% of thyroid nodules are benign.</div></div>
+            </div>
+            <div style="background:rgba(255,255,255,0.4);padding:20px;border-radius:16px;">
+                <div class="myth-fact myth"><div class="icon-box"><i class="fas fa-times"></i></div><div><strong>Myth:</strong> Extra iodine always helps.</div></div>
+                <div class="myth-fact fact"><div class="icon-box"><i class="fas fa-check"></i></div><div><strong>Fact:</strong> Too much iodine can worsen Hashimoto’s.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-microscope"></i> What is the Thyroid?</h2>
+        <p>The thyroid is a butterfly-shaped gland at the base of your neck. It is the engine of your metabolism — regulating energy use, temperature, heart rate, and weight.</p>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-stethoscope"></i> Key Disorders</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+            <div style="background:rgba(255,255,255,0.4);padding:25px;border-radius:16px;">
+                <h3 style="color:#dc2626;"><i class="fas fa-arrow-down"></i> Hypothyroidism</h3>
+                <p>Underactive – insufficient hormone production</p>
+                <ul style="color:var(--text-muted);"><li>Weight gain</li><li>Fatigue</li><li>Cold intolerance</li></ul>
+            </div>
+            <div style="background:rgba(255,255,255,0.4);padding:25px;border-radius:16px;">
+                <h3 style="color:#2563eb;"><i class="fas fa-arrow-up"></i> Hyperthyroidism</h3>
+                <p>Overactive – excess hormone production</p>
+                <ul style="color:var(--text-muted);"><li>Weight loss</li><li>Anxiety & tremors</li><li>Heat intolerance</li></ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-utensils"></i> Thyroid Nutrition Guide</h2>
+        <div class="nutri-grid">
+            <div class="nutri-card"><div class="nutri-icon"><i class="fas fa-fish"></i></div><strong>Selenium</strong><p>Brazil nuts, Tuna, Sardines</p></div>
+            <div class="nutri-card"><div class="nutri-icon"><i class="fas fa-cheese"></i></div><strong>Zinc</strong><p>Oysters, Beef, Pumpkin Seeds</p></div>
+            <div class="nutri-card"><div class="nutri-icon"><i class="fas fa-leaf"></i></div><strong>Iron</strong><p>Spinach, Lentils, Beans</p></div>
+            <div class="nutri-card"><div class="nutri-icon"><i class="fas fa-wine-bottle"></i></div><strong>Iodine</strong><p>Seaweed, Yogurt, Iodized Salt</p></div>
+        </div>
+        <p style="margin-top:15px;font-size:14px;opacity:0.8;">*Avoid large amounts of raw cruciferous vegetables (broccoli, cauliflower) if you have hypothyroidism.</p>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-shield-virus"></i> Risk Factors</h2>
+        <div class="pill-container">
+            <div class="risk-pill"><i class="fas fa-vial"></i> Iodine Deficiency</div>
+            <div class="risk-pill"><i class="fas fa-dna"></i> Autoimmune Disease</div>
+            <div class="risk-pill"><i class="fas fa-brain"></i> High Stress</div>
+            <div class="risk-pill"><i class="fas fa-baby"></i> Pregnancy</div>
+            <div class="risk-pill"><i class="fas fa-users"></i> Family History</div>
+        </div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-question-circle"></i> Frequently Asked Questions</h2>
+        <button class="accordion-btn">Is thyroid disease curable? <i class="fas fa-chevron-down"></i></button>
+        <div class="panel"><p>Most forms are lifelong but very well managed with medication. Some (e.g., postpartum thyroiditis) may resolve spontaneously.</p></div>
+        <button class="accordion-btn">How often should I get tested? <i class="fas fa-chevron-down"></i></button>
+        <div class="panel"><p>If on treatment: every 6–12 months. If high risk: annual TSH screening is wise.</p></div>
+        <button class="accordion-btn">Does stress cause thyroid problems? <i class="fas fa-chevron-down"></i></button>
+        <div class="panel"><p>Stress doesn’t directly cause thyroid disease but can trigger or worsen autoimmune conditions like Graves’ or Hashimoto’s.</p></div>
+    </div>
+
+    <div class="glass-panel reveal">
+        <h2><i class="fas fa-shield-alt"></i> Prevention Tips</h2>
+        <ul style="line-height:1.8;">
+            <li><strong>Diet:</strong> Ensure adequate iodine (iodized salt, seafood, dairy)</li>
+            <li><strong>Lifestyle:</strong> Regular exercise and stress management</li>
+            <li><strong>Screening:</strong> Annual TSH test if family history exists</li>
+        </ul>
+    </div>
+
+    <div style="text-align:center;margin:60px 0;" class="reveal">
+        <a href="index.html" class="glass-btn" style="padding:20px 50px;font-size:18px;">
+            Launch Diagnosis System <i class="fas fa-arrow-right" style="margin-left:10px;"></i>
+        </a>
+        <p style="margin-top:15px;font-size:14px;opacity:0.7;">Free for educational & clinical research use</p>
+    </div>
+</div>
+
+<footer style="text-align:center;color:#94a3b8;padding:30px;font-size:13px;">
+    © 2026 ThyroAI • Machine Learning Based Thyroid Diagnosis • Educational Purpose Only
+</footer>
+
+<script>
+    // Mouse Aura
+    const aura = document.getElementById('mouse-aura');
+    let mouseX = 0, mouseY = 0, auraX = 0, auraY = 0;
+    document.addEventListener('mousemove', e => {mouseX = e.clientX; mouseY = e.clientY;});
+    function animateAura() {
+        auraX += (mouseX - auraX) * 0.15;
+        auraY += (mouseY - auraY) * 0.15;
+        aura.style.left = auraX + 'px';
+        aura.style.top = auraY + 'px';
+        requestAnimationFrame(animateAura);
+    }
+    animateAura();
+
+    // Hover glow change
+    document.querySelectorAll('a, button, input, label, .glass-btn, .symptom-label').forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('hover-active'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('hover-active'));
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {if(entry.isIntersecting){entry.target.classList.add('active');}});
+    }, {threshold:0.1});
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Blob parallax
+    document.addEventListener('mousemove', e => {
+        const x = (window.innerWidth - e.pageX * 2) / 90;
+        const y = (window.innerHeight - e.pageY * 2) / 90;
+        document.querySelectorAll('.blob').forEach(b => b.style.transform = `translate(${x}px, ${y}px)`);
+    });
+
+    // Spotlight effect
+    document.querySelectorAll('.glass-panel').forEach(card => {
+        card.onmousemove = e => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        };
+    });
+
+    // Ripple effect
+    document.querySelectorAll('.glass-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            let x = e.clientX - e.target.getBoundingClientRect().left;
+            let y = e.clientY - e.target.getBoundingClientRect().top;
+            let ripple = document.createElement('span');
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+
+    // Symptom checker logic
+    function checkSymptoms(event) {
+        const checks = document.querySelectorAll('.symptom-checkbox:checked');
+        const res = document.getElementById('symptomResult');
+        let hypo = 0, hyper = 0;
+        checks.forEach(c => { if(c.value === 'hypo') hypo++; else if(c.value === 'hyper') hyper++; });
+
+        res.style.display = 'block';
+        if(checks.length === 0){
+            res.innerHTML = '<strong>No symptoms selected.</strong> If you feel well, that\'s great! Regular check-ups are still recommended.';
+            res.style.color = "#475569";
+        } else if(hypo > hyper){
+            res.innerHTML = "<i class='fas fa-exclamation-circle'></i> Symptoms lean toward <strong>Hypothyroidism</strong>. Please consult a doctor for blood tests.";
+            res.style.color = "#d97706";
+        } else if(hyper > hypo){
+            res.innerHTML = "<i class='fas fa-exclamation-triangle'></i> Symptoms suggest possible <strong>Hyperthyroidism</strong>. Seek medical advice promptly.";
+            res.style.color = "#dc2626";
+        } else {
+            res.innerHTML = "Mixed symptoms detected. A full thyroid panel (TSH, T3, T4) is recommended.";
+            res.style.color = "#6366f1";
+        }
+    }
+
+    // Accordion FAQ
+    document.querySelectorAll('.accordion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const panel = btn.nextElementSibling;
+            panel.classList.toggle('show');
+            btn.querySelector('i').style.transform = panel.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
+        });
+    });
+</script>
+</body>
+</html>
